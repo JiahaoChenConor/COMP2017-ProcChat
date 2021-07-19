@@ -1,0 +1,103 @@
+### Test 1: Gevent ###
+--- Create pipe 'gevent' successfully
+
+### Test 2: DISCONNECT all clients in one domain ####
+STATE {(Connected), identifier: client1, domain: comp2017}
+--- Create domain 'comp2017' successfully
+--- Create pipes of client1 successfully
+STATE {(Disconnect) domain: comp2017, identifier: client1}
+
+### Test 3: DISCONNECT one of the clients in one domain ###
+STATE {(Connected), identifier: client1, domain: comp2017}
+STATE {(Connected), identifier: client2, domain: comp2017}
+--- Create domain 'comp2017' successfully
+--- Create pipes of client1 successfully
+STATE {(Disconnect) domain: comp2017, identifier: client1}
+--- Disconnect client1 successfully (client2 still Connected)
+STATE {(Disconnect) domain: comp2017, identifier: client2}
+
+### Test 4: SEND and RECEIVE (two clients in the same domain) ###
+STATE {(Connected), identifier: client1, domain: comp2017}
+STATE {(Connected), identifier: client2, domain: comp2017}
+SEND [(SAY) client1 in domain comp2017 SAY hello]
+GTE <(RECEIVE) This is client2, from identifier: client1, message: hello>
+STATE {(Disconnect) domain: comp2017, identifier: client1}
+STATE {(Disconnect) domain: comp2017, identifier: client2}
+
+### Test 5: SEND and RECEIVE ###
+STATE {(Connected), identifier: client1, domain: comp2017}
+STATE {(Connected), identifier: client2, domain: comp2017}
+STATE {(Connected), identifier: client3, domain: comp2017}
+SEND [(SAY) client1 in domain comp2017 SAY hello]
+GTE <(RECEIVE) This is client2, from identifier: client1, message: hello>
+GTE <(RECEIVE) This is client3, from identifier: client1, message: hello>
+STATE {(Disconnect) domain: comp2017, identifier: client1}
+STATE {(Disconnect) domain: comp2017, identifier: client2}
+STATE {(Disconnect) domain: comp2017, identifier: client3}
+
+### Test 6: SAY and RECEIVE (clients in different domains)
+STATE {(Connected), identifier: client_A1, domain: comp2017_groupA}
+STATE {(Connected), identifier: client_A2, domain: comp2017_groupA}
+STATE {(Connected), identifier: client_B1, domain: comp2017_groupB}
+STATE {(Connected), identifier: client_B2, domain: comp2017_groupB}
+SEND [(SAY) client_A1 in domain comp2017_groupA SAY Hello, groupA]
+GTE <(RECEIVE) This is client_A2, from identifier: client_A1, message: Hello, groupA>
+(The first message of clients in groub_B received is PING rather than 'Hello, groupA')
+ GET <(PING)>
+GET <(PING)>
+STATE {(Disconnect) domain: comp2017_groupA, identifier: client_A1}
+STATE {(Disconnect) domain: comp2017_groupA, identifier: client_A2}
+STATE {(Disconnect) domain: comp2017_groupB, identifier: client_B1}
+STATE {(Disconnect) domain: comp2017_groupB, identifier: client_B2}
+
+### Test 7: simple SENDCONT and RECEIVECONT ###
+STATE {(Connected), identifier: client1, domain: comp2017}
+STATE {(Connected), identifier: client2, domain: comp2017}
+SEND [(SAYCONT) client1 in domain comp2017 SAYCONT hello with termination 255]
+GTE <(RECEIVE) This is client2, from identifier: client1, message: hello>
+STATE {(Disconnect) domain: comp2017, identifier: client1}
+STATE {(Disconnect) domain: comp2017, identifier: client2}
+
+### Test 8: SENDCONT and RECEIVECONT (continuous messages)###
+STATE {(Connected), identifier: client1, domain: comp2017}
+STATE {(Connected), identifier: client2, domain: comp2017}
+SEND [(SAYCONT) client1 in domain comp2017 SAYCONT hello with termination 0]
+GTE <(RECEIVE) This is client2, from identifier: client1, message: hello>
+SEND [(SAYCONT) client1 in domain comp2017 SAYCONT how with termination 0]
+GTE <(RECEIVE) This is client2, from identifier: client1, message: how>
+SEND [(SAYCONT) client1 in domain comp2017 SAYCONT are with termination 0]
+GTE <(RECEIVE) This is client2, from identifier: client1, message: are>
+SEND [(SAYCONT) client1 in domain comp2017 SAYCONT you with termination 255]
+GTE <(RECEIVE) This is client2, from identifier: client1, message: you>
+STATE {(Disconnect) domain: comp2017, identifier: client1}
+STATE {(Disconnect) domain: comp2017, identifier: client2}
+
+### Test 9: SAY/RECVIVE mix with SAYCONT/RECVCONT ###
+STATE {(Connected), identifier: client1, domain: comp2017}
+STATE {(Connected), identifier: client2, domain: comp2017}
+SEND [(SAYCONT) client1 in domain comp2017 SAYCONT hello with termination 0]
+GTE <(RECEIVE) This is client2, from identifier: client1, message: hello>
+SEND [(SAYCONT) client1 in domain comp2017 SAYCONT how with termination 0]
+GTE <(RECEIVE) This is client2, from identifier: client1, message: how>
+SEND [(SAYCONT) client1 in domain comp2017 SAYCONT are with termination 0]
+GTE <(RECEIVE) This is client2, from identifier: client1, message: are>
+SEND [(SAY) client1 in domain comp2017 SAY XXXXX]
+GTE <(RECEIVE) This is client2, from identifier: client1, message: XXXXX>
+SEND [(SAYCONT) client1 in domain comp2017 SAYCONT you with termination 255]
+GTE <(RECEIVE) This is client2, from identifier: client1, message: you>
+STATE {(Disconnect) domain: comp2017, identifier: client1}
+STATE {(Disconnect) domain: comp2017, identifier: client2}
+
+### Test 10: PING ###
+STATE {(Connected), identifier: client1, domain: comp2017}
+GET <(PING)>
+--- Client never response, disconnect successfully
+
+### Test 11: PING PONG ###
+STATE {(Connected), identifier: client1, domain: comp2017}
+GET <(PING)>
+SEND [(PONG) Send PONG to response PING]
+GET <(PING)>
+--- Client response with PONG, successfully
+STATE {(Disconnect) domain: comp2017, identifier: client1}
+
